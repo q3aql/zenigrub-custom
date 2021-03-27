@@ -32,7 +32,7 @@ _Dependencies: bash, coreutils, zenity, xterm, grep, sed_
 
 ### Images
 
-<img src="https://raw.githubusercontent.com/q3aql/zenigrub-custom/main/img/zenigrub-image.png" width="700" />
+<img src="https://raw.githubusercontent.com/q3aql/zenigrub-custom/main/img/zenigrub-image.png" width="876" />
 
 ### External links:
 
