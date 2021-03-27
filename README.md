@@ -30,7 +30,7 @@ _Dependencies: bash, coreutils, zenity, xterm, grep, sed_
 	sudo make install-es
 	```
 
-### Images
+### Images (Screenshots)
 
 <img src="https://raw.githubusercontent.com/q3aql/zenigrub-custom/main/img/zenigrub-image.png" width="876" />
 
