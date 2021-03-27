@@ -1,0 +1,75 @@
+#!/bin/bash
+
+##############################################################
+# Edita ciertas opciones del GRUB graficamente               #
+# U. Modificacion: 27-03-2021                                #
+# Autor: q3aql                                               #
+# Contacto: q3aql@protonmail.ch                              #
+# Licencia: GPL v2.0                                         #
+##############################################################
+VERSION="1.4"
+M_DATE="270321"
+
+# Enlace con gksudo,gksu o bessu a zenigrub-custom
+function showRootMessage() {
+	if [ -f /usr/bin/gksudo ] ; then
+		gksudo /usr/bin/zenigrub-custom
+		exit
+	elif [ -f /bin/gksudo ] ; then
+		gksudo /usr/bin/zenigrub-custom
+		exit
+	elif [ -f /usr/bin/gksu ] ; then
+		gksu /usr/bin/zenigrub-custom
+		exit
+	elif [ -f /bin/gksu ] ; then
+		gksu /usr/bin/zenigrub-custom
+		exit
+	elif [ -f /usr/bin/beesu ] ; then
+		beesu /usr/bin/zenigrub-custom
+		exit
+	elif [ -f /bin/beesu ] ; then
+		beesu /usr/bin/zenigrub-custom
+		exit
+	elif [ -f /bin/sudo ] ; then
+		xterm -T "zenigrub-custom ${VERSION} (${M_DATE})" -fa Monospace -fs 10 -bg white -fg black -e "sudo zenigrub-custom"
+		exit
+	elif [ -f /usr/bin/sudo ] ; then
+		xterm -T "zenigrub-custom ${VERSION} (${M_DATE})" -fa Monospace -fs 10 -bg white -fg black -e "sudo zenigrub-custom"
+		exit
+	elif [ -f /usr/bin/su ] ; then
+		xterm -T "zenigrub-custom ${VERSION} (${M_DATE})" -fa Monospace -fs 10 -bg white -fg black -e "su -c 'zenigrub-custom'"
+		exit
+	elif [ -f /bin/su ] ; then
+		xterm -T "zenigrub-custom ${VERSION} (${M_DATE})" -fa Monospace -fs 10 -bg white -fg black -e "su -c 'zenigrub-custom'"
+		exit
+	else
+		zenity -h &> /dev/null
+		output=$?
+		if [ ${output} -eq 0 ] ; then
+			zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info \
+			--text "The 'zenigrub-custom' program could not be run as administrator\n\nPlease run the 'zenigrub-custom' command as root user in terminal"
+		else
+			xterm -T "zenigrub-custom ${VERSION} (${M_DATE})" -fa Monospace -fs 10 -bg white -fg black -e "zenigrub-custom-admin --error"
+		fi
+	fi
+}
+
+# Funcion para mostrar mensaje de error
+function errorMessage() {
+	echo ""
+	echo "* ATTENTION!:"
+	echo ""
+	echo "* The 'zenigrub-custom' program could not be run as administrator"
+	echo ""
+	echo "* Please run the 'zenigrub-custom' command as root user in terminal"
+	echo ""
+	echo -n "* Press ENTER to exit... " ; read continue
+	exit
+}
+
+# Inicio del script
+if [ "${1}" == "--error" ] ; then
+	errorMessage
+else
+	showRootMessage
+fi
