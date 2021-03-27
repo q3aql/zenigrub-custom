@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=ZeniGRUB Custom
+GenericName=ZeniGRUB Custom
+Comment=Edita ciertas opciones del GRUB graficamente
+Exec=/opt/zenigrub-custom/zenigrub-custom-admin
+Icon=/opt/zenigrub-custom/zenigrub-custom.png
+Type=Application
+Categories=GTK;Utility;TerminalEmulator;System;Settings;
+

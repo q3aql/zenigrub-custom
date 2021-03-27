@@ -1,0 +1,442 @@
+#!/bin/bash
+
+##############################################################
+# Edita ciertas opciones del GRUB graficamente               #
+# U. Modificacion: 27-03-2021                                #
+# Autor: q3aql                                               #
+# Contacto: q3aql@protonmail.ch                              #
+# Licencia: GPL v2.0                                         #
+##############################################################
+VERSION="1.4"
+M_DATE="270321"
+
+# Variables generales
+defaultGrub="/etc/default/grub"
+defaultGrubFiles="/etc/default/grub.d"
+zenigrubInit="${defaultGrubFiles}/zenigrub-init.cfg"
+bootGrub="/boot/grub/grub.cfg"
+zenigrubDir="/etc/zenigrub"
+tmpZenigrub="/tmp/zenigrub.tmp"
+zenigrubSedFolder="/tmp/zenigrub/word/"
+
+# Funcion para comprobar permisos de administrador
+function comprobarAdministrador() {
+  mkdir -p /etc/root &> /dev/null
+  administrador=$?
+  if [ ${administrador} -eq 0 ] ; then
+    rm -rf /etc/root
+    touch ${zenigrubInit}
+  else
+    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --warning --width=340 \
+    --text "Son necesarios permisos de administrador"
+    echo ""
+    echo "* zenigrub-custom ${VERSION} (${M_DATE})"
+    echo ""
+    echo "* Son necesarios permisos de administrador"
+    echo ""
+    exit
+  fi
+}
+
+# Funcion para comprobar si existen los ficheros necesarios del grub
+function comprobarFicheros() {
+  if [ -f ${defaultGrub} ] ; then
+    if [ -f ${bootGrub} ] ; then
+      echo "null" > /dev/null
+    else
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --warning --width=340 \
+      --text "El archivo '${bootGrub}' no existe!"
+      exit
+    fi
+  else
+    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --warning --width=340 \
+    --text "El archivo '${defaultGrub}' no existe!"
+    exit
+  fi
+}
+
+# Funcion para hacer backup de los ficheros
+function backupFicheros() {
+  mkdir -p ${zenigrubDir}
+  if [ -f ${zenigrubDir}/grub ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${defaultGrub} ${zenigrubDir}
+  fi
+  if [ -f ${zenigrubDir}/grub.initial ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${defaultGrub} ${zenigrubDir}/grub.initial
+  fi
+  if [ -f ${zenigrubDir}/grub.cfg ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${bootGrub} ${zenigrubDir}
+  fi
+  if [ -f ${zenigrubDir}/grub.cfg.initial ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${bootGrub} ${zenigrubDir}/grub.cfg.initial
+  fi
+}
+
+#
+
+# Funcion para restaurar la configuracion del GRUB
+function restaurarConfiguracion() {
+  zenity --question --title "zenigrub-custom ${VERSION} (${M_DATE})" --cancel-label="No" \
+  --ok-label="Si" --width=470 --text "Se va a restaurar la configuracion inicial o la ultima guardada del GRUB. Continuar?"
+  output=$?
+  if [ ${output} -eq 1 ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${zenigrubDir}/grub ${defaultGrub}
+    errorUno=$?
+    cp -rfv ${zenigrubDir}/grub.cfg ${bootGrub}
+    errorDos=$?
+    erroresTotales=$(expr ${errorUno} + ${errorDos})
+    if [ ${erroresTotales} -eq 0 ] ; then
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=340 \
+      --text "La configuracion del GRUB se ha restaurado correctamente"
+      rm -rfv ${zenigrubDir}/grub
+      rm -rfv ${zenigrubDir}/grub.cfg
+    else
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=340 \
+      --text "Ha habido un problema al restaurar la configuracion del GRUB"
+    fi
+  fi
+}
+
+# Funcion para guardar la configuracion del GRUB
+function guardarConfiguracionGrub() {
+  zenity --question --title "zenigrub-custom ${VERSION} (${M_DATE})" --cancel-label="No" \
+  --ok-label="Si" --width=470 --text "Se va a establecer la configuracion actual como por defecto. Continuar?"
+  output=$?
+  if [ ${output} -eq 1 ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${defaultGrub} ${zenigrubDir}
+    errorUno=$?
+    cp -rfv ${bootGrub} ${zenigrubDir}
+    errorDos=$?
+    erroresTotales=$(expr ${errorUno} + ${errorDos})
+    if [ ${erroresTotales} -eq 0 ] ; then
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=340 \
+      --text "La configuracion del GRUB se ha guardado correctamente"
+    else
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=340 \
+      --text "Ha habido un problema al guardar la configuracion del GRUB"
+    fi
+  fi
+}
+
+# Funcion para habilitar las opciones necesarias
+function habilitarOpciones() {
+  # Habilitar las opciones si se encuentra desactivadas
+  sed -i 's/#GRUB_DEFAULT=/GRUB_DEFAULT=/g' "${defaultGrub}" &> /dev/null
+  sed -i 's/#GRUB_TIMEOUT=/GRUB_TIMEOUT=/g' "${defaultGrub}" &> /dev/null
+  sed -i 's/#GRUB_CMDLINE_LINUX_DEFAULT=/GRUB_CMDLINE_LINUX_DEFAULT=/g' "${defaultGrub}" &> /dev/null
+  sed -i 's/GRUB_HIDDEN_TIMEOUT=/#Disabled_GRUB_HIDDEN_TIMEOUT/g' "${defaultGrubFiles}"/* &> /dev/null
+  TiempoDesactivado=$(cat ${defaultGrub} | grep "#GRUB_HIDDEN_TIMEOUT=")
+  if [ -z "${TiempoDesactivado}" ] ; then
+    sed -i 's/GRUB_HIDDEN_TIMEOUT=/#GRUB_HIDDEN_TIMEOUT=/g' "${defaultGrub}" &> /dev/null
+  fi
+  # Comprobar si las lineas se encuentran agregadas
+  comprobarGrubDefault=$(cat ${defaultGrub} | grep "GRUB_DEFAULT=")
+  comprobarGrubTimeout=$(cat ${defaultGrub} | grep "GRUB_TIMEOUT=")
+  comprobarGrubCmdLineDefault=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=")
+  if [ -z "${comprobarGrubDefault}" ] ; then
+    echo "GRUB_DEFAULT=\"0\"" > /etc/default/grub.tmp
+    cat ${defaultGrub} >> /etc/default/grub.tmp
+    cp -rfv /etc/default/grub.tmp ${defaultGrub}
+  fi
+  if [ -z "${comprobarGrubTimeout}" ] ; then
+    echo "GRUB_TIMEOUT=\"10\"" > /etc/default/grub.tmp
+    cat ${defaultGrub} >> /etc/default/grub.tmp
+    cp -rfv /etc/default/grub.tmp ${defaultGrub}
+  fi
+  if [ -z "${comprobarGrubCmdLineDefault}" ] ; then
+    parametrosAnterior=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=")
+    if [ -z "${parametrosAnterior}" ] ; then
+      echo "GRUB_CMDLINE_LINUX_DEFAULT=\"\"" > /etc/default/grub.tmp
+      cat ${defaultGrub} >> /etc/default/grub.tmp
+      cp -rfv /etc/default/grub.tmp ${defaultGrub}
+    else
+      LineaInicial=2
+      cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+      parametrosGrub=$(cat ${tmpZenigrub})
+      LineaInicial=$(expr ${LineaInicial} + 1)
+      parametrosGrubLeido=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+      while [ "${parametrosGrubLeido}" != "" ] ; do
+        parametrosGrub="${parametrosGrub}=${parametrosGrubLeido}"
+        LineaInicial=$(expr ${LineaInicial} + 1)
+        parametrosGrubLeido=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+      done
+      echo "GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrub}\"" > /etc/default/grub.tmp
+      cat ${defaultGrub} >> /etc/default/grub.tmp
+      cp -rfv /etc/default/grub.tmp ${defaultGrub}
+      sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=/#Disabled_GRUB_CMDLINE_LINUX_DEFAULT/g' "${defaultGrubFiles}"/* &> /dev/null
+    fi
+  fi
+  parametrosAnterior=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=")
+  if [ -z "${parametrosAnterior}" ] ; then
+    echo "null" > /dev/null
+  else
+    LineaInicial=2
+    cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+    parametrosGrubAnterior=$(cat ${tmpZenigrub})
+    LineaInicial=$(expr ${LineaInicial} + 1)
+    parametrosGrubLeidoAnterior=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+    while [ "${parametrosGrubLeidoAnterior}" != "" ] ; do
+      parametrosGrubAnterior="${parametrosGrubAnterior}=${parametrosGrubLeidoAnterior}"
+      LineaInicial=$(expr ${LineaInicial} + 1)
+      parametrosGrubLeidoAnterior=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+    done
+    LineaInicial=2
+    cat "${defaultGrub}" | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+    parametrosGrub=$(cat ${tmpZenigrub})
+    LineaInicial=$(expr ${LineaInicial} + 1)
+    parametrosGrubLeido=$(cat "${defaultGrub}" | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+    while [ "${parametrosGrubLeido}" != "" ] ; do
+      parametrosGrub="${parametrosGrub}=${parametrosGrubLeido}"
+      LineaInicial=$(expr ${LineaInicial} + 1)
+      parametrosGrubLeido=$(cat "${defaultGrub}" | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+    done
+    sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrub}\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrubAnterior}\"/g" "${defaultGrub}"
+    sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=${parametrosGrub}/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrubAnterior}\"/g" "${defaultGrub}"
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=/#Disabled_GRUB_CMDLINE_LINUX_DEFAULT/g' "${defaultGrubFiles}"/* &> /dev/null
+  fi
+}
+
+# Funcion para eliminar espacios
+# Sintaxis: eliminarEspacios "<texto>"
+function eliminarEspacios() {
+  wordToConvert=${1}
+  zenigrubSedFile="${zenigrubSedFolder}/zenigrub-${RANDOM}.txt"
+  mkdir -p ${zenigrubSedFolder} && chmod 777 -R ${zenigrubSedFolder} 2> /dev/null
+  echo "${wordToConvert}" > ${zenigrubSedFile}
+  # Borrar espacios
+  sed -i 's/ /_/g' "${zenigrubSedFile}" &> /dev/null
+  # Mostrar texto convertido
+  wordToConvert=$(cat ${zenigrubSedFile})
+  echo ${wordToConvert}
+}
+
+# Funcion para restaurar los espacios
+# Sintaxis: restaEspacios "<texto>"
+function restaurarEspacios() {
+  wordToConvert=${1}
+  zenigrubSedFile="${zenigrubSedFolder}/zenigrub-${RANDOM}.txt"
+  mkdir -p ${zenigrubSedFolder} && chmod 777 -R ${zenigrubSedFolder} 2> /dev/null
+  echo "${wordToConvert}" > ${zenigrubSedFile}
+  # Borrar espacios
+  sed -i 's/_/\\ /g' "${zenigrubSedFile}" &> /dev/null
+  sed -i 's/\//\\\//g' "${zenigrubSedFile}" &> /dev/null
+  # Mostrar texto convertido
+  wordToConvert=$(cat ${zenigrubSedFile})
+  echo ${wordToConvert}
+}
+
+# Funcion para mostrar las entradas del GRUB
+function mostrarEntradasGrub() {
+  grep 'menuentry "' /boot/grub/grub.cfg | cut -d '"' -f 2 > ${tmpZenigrub}
+  grep "menuentry '" /boot/grub/grub.cfg | cut -d "'" -f 2 >> ${tmpZenigrub}
+  listaTotal=$(wc -l ${tmpZenigrub} | cut -d " " -f 1)
+  listaInicial=1
+  listaCompleta=""
+  while [ ${listaInicial} -le ${listaTotal} ] ; do
+    entradaLeida=$(cat ${tmpZenigrub} | head -${listaInicial} | tail -1)
+    entradaLeida=$(eliminarEspacios "${entradaLeida}")
+    listaCompleta="${listaCompleta} ${entradaLeida}"
+    listaInicial=$(expr ${listaInicial} + 1)
+  done
+  zenity --width=510 --height=370 --list --title "zenigrub-custom ${VERSION} ($M_DATE) | Entradas en el GRUB:" \
+  --column "Lista de entradas en el GRUB:" ${listaCompleta}
+}
+
+# Funcion para cambiar la entrada por defecto
+function cambiarEntradaDefecto() {
+  grep 'menuentry "' /boot/grub/grub.cfg | cut -d '"' -f 2 > ${tmpZenigrub}
+  grep "menuentry '" /boot/grub/grub.cfg | cut -d "'" -f 2 >> ${tmpZenigrub}
+  listaTotal=$(wc -l ${tmpZenigrub} | cut -d " " -f 1)
+  listaInicial=1
+  listaCompleta=""
+  while [ ${listaInicial} -le ${listaTotal} ] ; do
+    entradaLeida=$(cat ${tmpZenigrub} | head -${listaInicial} | tail -1)
+    entradaLeida=$(eliminarEspacios "${entradaLeida}")
+    listaCompleta="${listaCompleta} ${entradaLeida}"
+    listaInicial=$(expr ${listaInicial} + 1)
+  done
+  establecerEntrada=$(zenity --width=510 --height=370 --list --title "zenigrub-custom ${VERSION} ($M_DATE)" \
+  --column "Selecciona la entrada por defecto en GRUB:" ${listaCompleta})
+  if [ ${cancelar} -eq 1 ] ; then
+    mostrarMenuPrincipal
+  else
+    if [ -z "${establecerEntrada}" ] ; then
+      mostrarMenuPrincipal
+    else
+      entradaDefecto=$(cat ${defaultGrub} | grep "GRUB_DEFAULT=" | cut -d "=" -f 2 | cut -d '"' -f 2)
+      entradaAnterior=$(eliminarEspacios "${entradaDefecto}")
+      entradaAnterior=$(restaurarEspacios ${entradaAnterior})
+      nuevaEntrada=$(restaurarEspacios ${establecerEntrada})
+      echo "La entrada actual es '${entradaAnterior}'"
+      echo "Se ha definido como entrada principal a '${nuevaEntrada}'"
+      sed -i "s/GRUB_DEFAULT=\"${entradaAnterior}\"/GRUB_DEFAULT=\"${nuevaEntrada}\"/g" "${defaultGrub}"
+      sed -i "s/GRUB_DEFAULT=${entradaAnterior}/GRUB_DEFAULT=\"${nuevaEntrada}\"/g" "${defaultGrub}"
+      actualizarGrub
+    fi
+  fi
+}
+
+# Funcion para mostrar la configuracion por defecto
+function mostrarConfiguracionActual() {
+  entradaDefecto=$(cat ${defaultGrub} | grep "GRUB_DEFAULT=" | cut -d "=" -f 2 | cut -d '"' -f 2)
+  tiempoGrub=$(cat ${defaultGrub} | grep "GRUB_TIMEOUT=" | cut -d "=" -f 2 | cut -d '"' -f 2)
+  LineaInicial=2
+  cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+  parametrosGrub=$(cat ${tmpZenigrub})
+  LineaInicial=$(expr ${LineaInicial} + 1)
+  parametrosGrubLeido=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+  while [ "${parametrosGrubLeido}" != "" ] ; do
+    parametrosGrub="${parametrosGrub}=${parametrosGrubLeido}"
+    LineaInicial=$(expr ${LineaInicial} + 1)
+    parametrosGrubLeido=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+  done
+  echo "${parametrosGrub}" > ${tmpZenigrub}
+  zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=520 \
+  --text "Configuracion GRUB:\n
+  - Entrada por defecto: ${entradaDefecto}
+  - Tiempo de GRUB: ${tiempoGrub}
+  - Parametros de arranque: ${parametrosGrub}\n"
+}
+
+# Funcion para cambiar el tiempo del GRUB
+function cambiarTiempoGrub() {
+  tiempoGrub=$(cat ${defaultGrub} | grep "GRUB_TIMEOUT=" | cut -d "=" -f 2 | cut -d '"' -f 2)
+  tiempoActual=$(zenity --entry --title "zenigrub-custom ${VERSION} (${M_DATE})" \
+  --text "Escribe los SEGUNDOS que estara el GRUB visible:" --entry-text "${tiempoGrub}")
+  cancelar=$?
+  if [ ${cancelar} -eq 1 ] ; then
+    mostrarMenuPrincipal
+  else
+    if [ -z "${tiempoActual}" ] ; then
+      actualizarGrub
+    else
+      sed -i "s/GRUB_TIMEOUT=\"${tiempoGrub}\"/GRUB_TIMEOUT=\"${tiempoActual}\"/g" "${defaultGrub}"
+      sed -i "s/GRUB_TIMEOUT=${tiempoGrub}/GRUB_TIMEOUT=\"${tiempoActual}\"/g" "${defaultGrub}"
+      actualizarGrub
+    fi
+  fi
+}
+
+# Funcion para editar los parametros de arranque
+function editarParametrosArranque() {
+  # Se cargan los actuales parametros de arranque
+  LineaInicial=2
+  cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+  parametrosGrub=$(cat ${tmpZenigrub})
+  LineaInicial=$(expr ${LineaInicial} + 1)
+  parametrosGrubLeido=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+  while [ "${parametrosGrubLeido}" != "" ] ; do
+    parametrosGrub="${parametrosGrub}=${parametrosGrubLeido}"
+    LineaInicial=$(expr ${LineaInicial} + 1)
+    parametrosGrubLeido=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+  done
+  echo "${parametrosGrub}" > ${tmpZenigrub}
+  parametrosGrubMostrar=$(cat ${tmpZenigrub})
+  sed -i 's/ /\\ /g' "${tmpZenigrub}" &> /dev/null
+  parametrosGrub=$(cat ${tmpZenigrub})
+  # Se leen y procesan los nuevos parametros
+  parametrosActual=$(zenity --entry --title "zenigrub-custom ${VERSION} (${M_DATE})" \
+  --text "Escribe los PARAMETROS DE ARRANQUE en el GRUB:    " --entry-text "${parametrosGrubMostrar}")
+  cancelar=$?
+  if [ ${cancelar} -eq 1 ] ; then
+    mostrarMenuPrincipal
+  else
+    if [ -z "${parametrosActual}" ] ; then
+      mostrarMenuPrincipal
+    else
+      echo ${parametrosActual} > ${tmpZenigrub}
+      sed -i 's/ /\\ /g' "${tmpZenigrub}" &> /dev/null
+      parametrosActual=$(cat ${tmpZenigrub})
+      sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrub}\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosActual}\"/g" "${defaultGrub}"
+      sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=${parametrosGrub}/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosActual}\"/g" "${defaultGrub}"
+      actualizarGrub
+    fi
+  fi
+}
+
+# Funcion para actualizar el GRUB
+function actualizandoGRUB() {
+  update-grub
+  output=$?
+  if [ ${output} -eq 0 ] ; then
+    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=320 \
+    --text "El proceso de actualizacion de GRUB ha finalizado!"
+  else
+    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --error --width=320 \
+    --text "Ha habido un error en el proceso de actualizacion de GRUB"
+  fi
+}
+
+# Funcion para actualizar el GRUB mostrando la barra de progreso
+function actualizarGrub() {
+  actualizandoGRUB | zenity --progress --title "zenigrub-custom ${VERSION} (${M_DATE})" --auto-close \
+  --pulsate --text "Actualizando configuracion del GRUB"
+}
+
+# Funcion para mostrar el "acerca" del programa
+function mostrarAcerca() {
+  zenity --title "Acerca" --info --width=330 \
+  --text "Software: zenigrub-custom ${VERSION} (${M_DATE})\nAutor: q3aql\nContacto: q3aql@protonmail.ch\nLicencia: GPL v2.0"
+}
+
+# Mostrar menu con todas las opciones
+function mostrarMenuPrincipal() {
+  mostrarMenu=0
+  while [ ${mostrarMenu} -eq 0 ] ; do
+    opcion=$(zenity --width=340 --height=365 --list --title "zenigrub-custom ${VERSION} (${M_DATE})" \
+    --column "Selecciona una opcion:" "Mostrar entradadas del GRUB" "Cambiar entrada por defecto" \
+    "Cambiar tiempo de GRUB" "Editar parametros de arranque" "Mostrar configuracion actual" \
+    "Actualizar GRUB (update-grub)" "Guardar configuracion de GRUB" "Restaurar configuracion de GRUB" \
+    "Acerca" "Salir")
+    cancelar=$?
+    if [ ${cancelar} -eq 1 ] ; then
+      mostrarMenu=1
+      exit
+    else
+      if [ "${opcion}" == "Mostrar entradadas del GRUB" ] ; then
+        mostrarEntradasGrub
+      elif [ "${opcion}" == "Cambiar entrada por defecto" ] ; then
+        cambiarEntradaDefecto
+      elif [ "${opcion}" == "Cambiar tiempo de GRUB" ] ; then
+        cambiarTiempoGrub
+      elif [ "${opcion}" == "Editar parametros de arranque" ] ; then
+        editarParametrosArranque
+      elif [ "${opcion}" == "Mostrar configuracion actual" ] ; then
+        mostrarConfiguracionActual
+      elif [ "${opcion}" == "Actualizar GRUB (update-grub)" ] ; then
+        actualizarGrub
+      elif [ "${opcion}" == "Guardar configuracion de GRUB" ] ; then
+        guardarConfiguracionGrub
+      elif [ "${opcion}" == "Restaurar configuracion de GRUB" ] ; then
+        restaurarConfiguracion
+      elif [ "${opcion}" == "Acerca" ] ; then
+        mostrarAcerca
+      elif [ "${opcion}" == "Salir" ] ; then
+        mostrarMenu=1
+        exit
+      else
+        zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --warning --width=300 \
+        --text "Elige una de las opciones del menu"
+      fi
+    fi
+  done
+}
+
+# Iniciar aplicacion
+comprobarAdministrador
+comprobarFicheros
+habilitarOpciones
+backupFicheros
+mostrarMenuPrincipal
