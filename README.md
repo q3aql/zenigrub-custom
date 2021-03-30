@@ -1,5 +1,5 @@
-zenigrub-custom - A simple GTK (Zenity) interface to edit basic settings of GRUB
-================================================================================
+zenigrub-custom - A simple GTK (Zenity) interface to edit basic settings of GRUB.
+=================================================================================
 
 ### Downloads:
   * [zenigrub-custom-1.4.tar.gz](https://github.com/q3aql/zenigrub-custom/releases/download/v1.4/zenigrub-custom-1.4.tar.gz) - Generic package (English + Spanish Languages).
@@ -15,9 +15,9 @@ _Dependencies: bash, coreutils, zenity, xterm, grep, sed_
   * Open terminal and run the following commands:
 
 	```shell
-	tar zxvf zenigrub-custom-1.4.tar.gz
-	cd zenigrub-custom
-	sudo make install
+	$ tar zxvf zenigrub-custom-1.4.tar.gz
+	$ cd zenigrub-custom
+	$ sudo make install
 	```
 
 ### Installation (Generic package - Spanish version):
@@ -25,9 +25,9 @@ _Dependencies: bash, coreutils, zenity, xterm, grep, sed_
   * Open terminal and run the following commands:
 
 	```shell
-	tar zxvf zenigrub-custom-1.4.tar.gz
-	cd zenigrub-custom
-	sudo make install-es
+	$ tar zxvf zenigrub-custom-1.4.tar.gz
+	$ cd zenigrub-custom
+	$ sudo make install-es
 	```
 
 ### Images (Screenshots)
