@@ -2,11 +2,11 @@ zenigrub-custom - A simple GTK (Zenity) interface to edit basic settings of GRUB
 =================================================================================
 
 ### Downloads:
-  * [zenigrub-custom-1.4.tar.gz](https://github.com/q3aql/zenigrub-custom/releases/download/v1.4/zenigrub-custom-1.4.tar.gz) - Generic package (English + Spanish Languages).
-  * [zenigrub-custom-1.4-en.deb](https://github.com/q3aql/zenigrub-custom/releases/download/v1.4/zenigrub-custom-1.4-en.deb) - Debian based package (English version).
-  * [zenigrub-custom-1.4-en.rpm](https://github.com/q3aql/zenigrub-custom/releases/download/v1.4/zenigrub-custom-1.4-en.rpm) - RedHat/Fedora based package (English version).
-  * [zenigrub-custom-1.4-es.deb](https://github.com/q3aql/zenigrub-custom/releases/download/v1.4/zenigrub-custom-1.4-es.deb) - Debian based package (Spanish version).
-  * [zenigrub-custom-1.4-es.rpm](https://github.com/q3aql/zenigrub-custom/releases/download/v1.4/zenigrub-custom-1.4-es.rpm) - RedHat/Fedora based package (Spanish version).
+  * [zenigrub-custom-1.5.tar.gz](https://github.com/q3aql/zenigrub-custom/releases/download/v1.5/zenigrub-custom-1.5.tar.gz) - Generic package (English + Spanish Languages).
+  * [zenigrub-custom-1.5-en.deb](https://github.com/q3aql/zenigrub-custom/releases/download/v1.5/zenigrub-custom-1.5-en.deb) - Debian based package (English version).
+  * [zenigrub-custom-1.5-en.rpm](https://github.com/q3aql/zenigrub-custom/releases/download/v1.5/zenigrub-custom-1.5-en.rpm) - RedHat/Fedora based package (English version).
+  * [zenigrub-custom-1.5-es.deb](https://github.com/q3aql/zenigrub-custom/releases/download/v1.5/zenigrub-custom-1.5-es.deb) - Debian based package (Spanish version).
+  * [zenigrub-custom-1.5-es.rpm](https://github.com/q3aql/zenigrub-custom/releases/download/v1.5/zenigrub-custom-1.5-es.rpm) - RedHat/Fedora based package (Spanish version).
   
 _Dependencies: bash, coreutils, zenity, xterm, grep, sed_
 
@@ -15,7 +15,7 @@ _Dependencies: bash, coreutils, zenity, xterm, grep, sed_
   * Open terminal and run the following commands:
 
 	```shell
-	$ tar zxvf zenigrub-custom-1.4.tar.gz
+	$ tar zxvf zenigrub-custom-1.5.tar.gz
 	$ cd zenigrub-custom
 	$ sudo make install
 	```
@@ -25,7 +25,7 @@ _Dependencies: bash, coreutils, zenity, xterm, grep, sed_
   * Open terminal and run the following commands:
 
 	```shell
-	$ tar zxvf zenigrub-custom-1.4.tar.gz
+	$ tar zxvf zenigrub-custom-1.5.tar.gz
 	$ cd zenigrub-custom
 	$ sudo make install-es
 	```
