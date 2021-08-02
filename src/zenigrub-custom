@@ -2,13 +2,13 @@
 
 ##############################################################
 # Edita ciertas opciones del GRUB graficamente               #
-# U. Modificacion: 27-03-2021                                #
+# U. Modificacion: 02-08-2021                                #
 # Autor: q3aql                                               #
 # Contacto: q3aql@protonmail.ch                              #
 # Licencia: GPL v2.0                                         #
 ##############################################################
 VERSION="1.4"
-M_DATE="270321"
+M_DATE="020821"
 
 # Variables generales
 defaultGrub="/etc/default/grub"
@@ -19,6 +19,10 @@ zenigrubDir="/etc/zenigrub"
 tmpZenigrub="/tmp/zenigrub.tmp"
 zenigrubSedFolder="/tmp/zenigrub/word/"
 
+# Variables
+iconPath="/opt/zenigrub-custom/zenigrub-custom.png"
+imagesPath="/opt/zenigrub-custom/img"
+
 # Funcion para comprobar permisos de administrador
 function comprobarAdministrador() {
   mkdir -p /etc/root &> /dev/null
@@ -27,7 +31,7 @@ function comprobarAdministrador() {
     rm -rf /etc/root
     touch ${zenigrubInit}
   else
-    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --warning --width=340 \
+    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --warning --width=340 \
     --text "Administrator permissions are required "
     echo ""
     echo "* zenigrub-custom ${VERSION} (${M_DATE})"
@@ -44,12 +48,12 @@ function comprobarFicheros() {
     if [ -f ${bootGrub} ] ; then
       echo "null" > /dev/null
     else
-      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --warning --width=340 \
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --warning --width=340 \
       --text "The file '${bootGrub}' doesn't exist!"
       exit
     fi
   else
-    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --warning --width=340 \
+    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --warning --width=340 \
     --text "The file '${defaultGrub}' doesn't exist!"
     exit
   fi
@@ -84,7 +88,7 @@ function backupFicheros() {
 
 # Funcion para restaurar la configuracion del GRUB
 function restaurarConfiguracion() {
-  zenity --question --title "zenigrub-custom ${VERSION} (${M_DATE})" --cancel-label="No" \
+  zenity --question --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --cancel-label="No" \
   --ok-label="Yes" --width=470 --text "The initial or last saved GRUB configuration will be restored. Continue?"
   output=$?
   if [ ${output} -eq 1 ] ; then
@@ -96,12 +100,12 @@ function restaurarConfiguracion() {
     errorDos=$?
     erroresTotales=$(expr ${errorUno} + ${errorDos})
     if [ ${erroresTotales} -eq 0 ] ; then
-      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=340 \
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --info --width=340 \
       --text "GRUB settings have been successfully restored"
       rm -rfv ${zenigrubDir}/grub
       rm -rfv ${zenigrubDir}/grub.cfg
     else
-      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=340 \
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --info --width=340 \
       --text "There was a problem restoring the GRUB configuration"
     fi
   fi
@@ -109,7 +113,7 @@ function restaurarConfiguracion() {
 
 # Funcion para guardar la configuracion del GRUB
 function guardarConfiguracionGrub() {
-  zenity --question --title "zenigrub-custom ${VERSION} (${M_DATE})" --cancel-label="No" \
+  zenity --question --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --cancel-label="No" \
   --ok-label="Yes" --width=470 --text "The current configuration will be set as the default. Continue?"
   output=$?
   if [ ${output} -eq 1 ] ; then
@@ -121,10 +125,10 @@ function guardarConfiguracionGrub() {
     errorDos=$?
     erroresTotales=$(expr ${errorUno} + ${errorDos})
     if [ ${erroresTotales} -eq 0 ] ; then
-      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=340 \
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --info --width=340 \
       --text "GRUB configuration has been saved successfully"
     else
-      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=340 \
+      zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --info --width=340 \
       --text "There was a problem saving the GRUB configuration"
     fi
   fi
@@ -251,7 +255,7 @@ function mostrarEntradasGrub() {
     listaInicial=$(expr ${listaInicial} + 1)
   done
   zenity --width=510 --height=370 --list --title "zenigrub-custom ${VERSION} ($M_DATE) | Entries of GRUB:" \
-  --column "List of entries of GRUB:" ${listaCompleta}
+  --window-icon=${iconPath} --column "List of entries of GRUB:" ${listaCompleta}
 }
 
 # Funcion para cambiar la entrada por defecto
@@ -268,7 +272,7 @@ function cambiarEntradaDefecto() {
     listaInicial=$(expr ${listaInicial} + 1)
   done
   establecerEntrada=$(zenity --width=510 --height=370 --list --title "zenigrub-custom ${VERSION} ($M_DATE)" \
-  --column "Select the default entry in GRUB:" ${listaCompleta})
+  --window-icon=${iconPath} --column "Select the default entry in GRUB:" ${listaCompleta})
   if [ ${cancelar} -eq 1 ] ; then
     mostrarMenuPrincipal
   else
@@ -303,7 +307,7 @@ function mostrarConfiguracionActual() {
     parametrosGrubLeido=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
   done
   echo "${parametrosGrub}" > ${tmpZenigrub}
-  zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=520 \
+  zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --info --width=520 \
   --text "GRUB configuration:\n
   - Default entry: ${entradaDefecto}
   - GRUB time: ${tiempoGrub}
@@ -313,7 +317,7 @@ function mostrarConfiguracionActual() {
 # Funcion para cambiar el tiempo del GRUB
 function cambiarTiempoGrub() {
   tiempoGrub=$(cat ${defaultGrub} | grep "GRUB_TIMEOUT=" | cut -d "=" -f 2 | cut -d '"' -f 2)
-  tiempoActual=$(zenity --entry --title "zenigrub-custom ${VERSION} (${M_DATE})" \
+  tiempoActual=$(zenity --entry --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} \
   --text "Type the SECONDS that the GRUB will be visible:" --entry-text "${tiempoGrub}")
   cancelar=$?
   if [ ${cancelar} -eq 1 ] ; then
@@ -347,7 +351,7 @@ function editarParametrosArranque() {
   sed -i 's/ /\\ /g' "${tmpZenigrub}" &> /dev/null
   parametrosGrub=$(cat ${tmpZenigrub})
   # Se leen y procesan los nuevos parametros
-  parametrosActual=$(zenity --entry --title "zenigrub-custom ${VERSION} (${M_DATE})" \
+  parametrosActual=$(zenity --entry --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} \
   --text "Type the BOOT PARAMETERS in GRUB:       " --entry-text "${parametrosGrubMostrar}")
   cancelar=$?
   if [ ${cancelar} -eq 1 ] ; then
@@ -371,23 +375,23 @@ function actualizandoGRUB() {
   update-grub
   output=$?
   if [ ${output} -eq 0 ] ; then
-    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info --width=320 \
+    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --info --width=320 \
     --text "GRUB update process is complete!"
   else
-    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --error --width=320 \
+    zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --error --width=320 \
     --text "There was an error in the GRUB update process"
   fi
 }
 
 # Funcion para actualizar el GRUB mostrando la barra de progreso
 function actualizarGrub() {
-  actualizandoGRUB | zenity --progress --title "zenigrub-custom ${VERSION} (${M_DATE})" --auto-close \
+  actualizandoGRUB | zenity --progress --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --auto-close \
   --pulsate --text "Updating GRUB configuration"
 }
 
 # Funcion para mostrar el "acerca" del programa
 function mostrarAcerca() {
-  zenity --title "About" --info --width=330 \
+  zenity --title "About" --window-icon=${iconPath} --info --width=330 \
   --text "Software: zenigrub-custom ${VERSION} (${M_DATE})\nAuthor: q3aql\nContact: q3aql@protonmail.ch\nLicense: GPL v2.0"
 }
 
@@ -395,39 +399,40 @@ function mostrarAcerca() {
 function mostrarMenuPrincipal() {
   mostrarMenu=0
   while [ ${mostrarMenu} -eq 0 ] ; do
-    opcion=$(zenity --width=340 --height=365 --list --title "zenigrub-custom ${VERSION} (${M_DATE})" \
-    --column "Select an option:" "Show GRUB entries" "Change default entry" \
-    "Change GRUB time" "Edit boot parameters" "Show current settings" \
-    "Update GRUB (update-grub)" "Save GRUB configuration" "Restore GRUB settings" \
-    "About" "Exit")
+    opcion=$(zenity --width=340 --height=420 --list --title "zenigrub-custom ${VERSION} (${M_DATE})" \
+    --window-icon=${iconPath} --imagelist --column "Icon" --column "Option" ${imagesPath}/show-grub-entries.png "Show GRUB entries" \
+    ${imagesPath}/change-default-entry.png "Change default entry" ${imagesPath}/change-grub-time.png "Change GRUB time" \
+    ${imagesPath}/edit-boot-parameters.png "Edit boot parameters" ${imagesPath}/show-current-settings.png "Show current settings" \
+    ${imagesPath}/update-grub.png "Update GRUB (update-grub)" ${imagesPath}/save-grub-configuration.png "Save GRUB configuration" ${imagesPath}/restore-grub-settings.png "Restore GRUB settings" \
+    ${imagesPath}/about.png "About" ${imagesPath}/exit.png "Exit")
     cancelar=$?
     if [ ${cancelar} -eq 1 ] ; then
       mostrarMenu=1
       exit
     else
-      if [ "${opcion}" == "Show GRUB entries" ] ; then
+      if [ "${opcion}" == "${imagesPath}/show-grub-entries.png" ] ; then
         mostrarEntradasGrub
-      elif [ "${opcion}" == "Change default entry" ] ; then
+      elif [ "${opcion}" == "${imagesPath}/change-default-entry.png" ] ; then
         cambiarEntradaDefecto
-      elif [ "${opcion}" == "Change GRUB time" ] ; then
+      elif [ "${opcion}" == "${imagesPath}/change-grub-time.png" ] ; then
         cambiarTiempoGrub
-      elif [ "${opcion}" == "Edit boot parameters" ] ; then
+      elif [ "${opcion}" == "${imagesPath}/edit-boot-parameters.png" ] ; then
         editarParametrosArranque
-      elif [ "${opcion}" == "Show current settings" ] ; then
+      elif [ "${opcion}" == "${imagesPath}/show-current-settings.png" ] ; then
         mostrarConfiguracionActual
-      elif [ "${opcion}" == "Update GRUB (update-grub)" ] ; then
+      elif [ "${opcion}" == "${imagesPath}/update-grub.png" ] ; then
         actualizarGrub
-      elif [ "${opcion}" == "Save GRUB configuration" ] ; then
+      elif [ "${opcion}" == "${imagesPath}/save-grub-configuration.png" ] ; then
         guardarConfiguracionGrub
-      elif [ "${opcion}" == "Restore GRUB settings" ] ; then
+      elif [ "${opcion}" == "${imagesPath}/restore-grub-settings.png" ] ; then
         restaurarConfiguracion
-      elif [ "${opcion}" == "About" ] ; then
+      elif [ "${opcion}" == "${imagesPath}/about.png" ] ; then
         mostrarAcerca
-      elif [ "${opcion}" == "Exit" ] ; then
+      elif [ "${opcion}" == "${imagesPath}/exit.png" ] ; then
         mostrarMenu=1
         exit
       else
-        zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --warning --width=300 \
+        zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --warning --width=300 \
         --text "Choose one of the menu options"
       fi
     fi

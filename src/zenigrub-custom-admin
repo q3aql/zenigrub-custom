@@ -2,13 +2,16 @@
 
 ##############################################################
 # Edita ciertas opciones del GRUB graficamente               #
-# U. Modificacion: 27-03-2021                                #
+# U. Modificacion: 02-08-2021                                #
 # Autor: q3aql                                               #
 # Contacto: q3aql@protonmail.ch                              #
 # Licencia: GPL v2.0                                         #
 ##############################################################
 VERSION="1.4"
-M_DATE="270321"
+M_DATE="020821"
+
+# Variables
+iconPath="/opt/zenigrub-custom/zenigrub-custom.png"
 
 # Enlace con gksudo,gksu o bessu a zenigrub-custom
 function showRootMessage() {
@@ -46,7 +49,7 @@ function showRootMessage() {
 		zenity -h &> /dev/null
 		output=$?
 		if [ ${output} -eq 0 ] ; then
-			zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --info \
+			zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --width 450 --info \
 			--text "The 'zenigrub-custom' program could not be run as administrator\n\nPlease run the 'zenigrub-custom' command as root user in terminal"
 		else
 			xterm -T "zenigrub-custom ${VERSION} (${M_DATE})" -fa Monospace -fs 10 -bg white -fg black -e "zenigrub-custom-admin --error"
