@@ -432,7 +432,7 @@ function mostrarMenuPrincipal() {
         exit
       else
         zenity --title "zenigrub-custom ${VERSION} (${M_DATE})" --window-icon=${iconPath} --warning --width=300 \
-        --text "Choose one of the menu options"
+        --text "Elige una de las opciones del menu"
       fi
     fi
   done
