@@ -1,0 +1,540 @@
+#!/bin/bash
+
+##############################################################
+# Edita ciertas opciones del GRUB mediante terminal          #
+# U. Modificacion: 27-10-2021                                #
+# Autor: q3aql                                               #
+# Contacto: q3aql@protonmail.ch                              #
+# Licencia: GPL v2.0                                         #
+##############################################################
+VERSION="1.5"
+M_DATE="271021"
+
+# Variables generales
+defaultGrub="/etc/default/grub"
+defaultGrubFiles="/etc/default/grub.d"
+zenigrubInit="${defaultGrubFiles}/zenigrub-init.cfg"
+bootGrub="/boot/grub/grub.cfg"
+zenigrubDir="/etc/zenigrub"
+tmpZenigrub="/tmp/zenigrub.tmp"
+zenigrubSedFolder="/tmp/zenigrub/word/"
+
+# Variables
+iconPath="/opt/zenigrub-custom/zenigrub-custom.png"
+imagesPath="/opt/zenigrub-custom/img"
+
+# Funcion para comprobar permisos de administrador
+function comprobarAdministrador() {
+  mkdir -p /etc/root &> /dev/null
+  administrador=$?
+  if [ ${administrador} -eq 0 ] ; then
+    rm -rf /etc/root
+    touch ${zenigrubInit}
+  else
+    echo ""
+    echo "* zenigrub-custom-cli ${VERSION} (${M_DATE})"
+    echo ""
+    echo "* Administrator permissions are required."
+    echo ""
+    exit
+  fi
+}
+
+# Funcion para comprobar si existen los ficheros necesarios del grub
+function comprobarFicheros() {
+  if [ -f ${defaultGrub} ] ; then
+    if [ -f ${bootGrub} ] ; then
+      echo "null" > /dev/null
+    else
+      echo ""
+      echo "* zenigrub-custom-cli ${VERSION} (${M_DATE})"
+      echo ""
+      echo "+ The file '${bootGrub}' doesn't exist!"
+      echo ""
+      exit
+    fi
+  else
+    echo "* zenigrub-custom-cli ${VERSION} (${M_DATE})"
+    echo ""
+    echo "+ The file '${defaultGrub}' doesn't exist!"
+    echo ""
+    exit
+  fi
+}
+
+# Funcion para hacer backup de los ficheros
+function backupFicheros() {
+  mkdir -p ${zenigrubDir}
+  if [ -f ${zenigrubDir}/grub ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${defaultGrub} ${zenigrubDir}
+  fi
+  if [ -f ${zenigrubDir}/grub.initial ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${defaultGrub} ${zenigrubDir}/grub.initial
+  fi
+  if [ -f ${zenigrubDir}/grub.cfg ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${bootGrub} ${zenigrubDir}
+  fi
+  if [ -f ${zenigrubDir}/grub.cfg.initial ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${bootGrub} ${zenigrubDir}/grub.cfg.initial
+  fi
+}
+
+#
+
+# Funcion para restaurar la configuracion del GRUB
+function restaurarConfiguracion() {
+  clear
+  echo ""
+  echo "* zenigrub-custom-cli ${VERSION} (${M_DATE})"
+  echo ""
+  echo "* The initial or last saved GRUB configuration will be restored!." 
+  echo -n "+ [Default: n] Do you want to continue? (y/n): " ; read restore_grub
+  if [ -z "${restore_grub}" ] ; then
+    echo "null" > /dev/null
+  elif [ "${restore_grub}" == "n" ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${zenigrubDir}/grub ${defaultGrub}
+    errorUno=$?
+    cp -rfv ${zenigrubDir}/grub.cfg ${bootGrub}
+    errorDos=$?
+    erroresTotales=$(expr ${errorUno} + ${errorDos})
+    if [ ${erroresTotales} -eq 0 ] ; then
+      rm -rfv ${zenigrubDir}/grub
+      rm -rfv ${zenigrubDir}/grub.cfg
+      echo ""
+      echo "* GRUB settings have been successfully restored."
+      echo ""
+      echo -n "+ Press ENTER to continue.. " ; read continue
+    else
+      echo ""
+      echo "* There was a problem restoring the GRUB configuration."
+      echo ""
+      echo -n "+ Press ENTER to continue.. " ; read continue
+    fi
+  fi
+}
+
+# Funcion para guardar la configuracion del GRUB
+function guardarConfiguracionGrub() {
+  clear
+  echo ""
+  echo "* zenigrub-custom-cli ${VERSION} (${M_DATE})"
+  echo ""
+  echo "* The current configuration will be set as the default." 
+  echo -n "+ [Default: n] Do you want to continue? (y/n): " ; read save_grub
+  if [ -z "${save_grub}" ] ; then
+    echo "null" > /dev/null
+  elif [ "${save_grub}" == "n" ] ; then
+    echo "null" > /dev/null
+  else
+    cp -rfv ${defaultGrub} ${zenigrubDir}
+    errorUno=$?
+    cp -rfv ${bootGrub} ${zenigrubDir}
+    errorDos=$?
+    erroresTotales=$(expr ${errorUno} + ${errorDos})
+    if [ ${erroresTotales} -eq 0 ] ; then
+      echo ""
+      echo "* GRUB configuration has been saved successfully."
+      echo ""
+      echo -n "+ Press ENTER to continue " ; read continue
+    else
+      echo ""
+      echo "* There was a problem saving the GRUB configuration."
+      echo ""
+      echo -n "+ Press ENTER to continue.. " ; read continue
+    fi
+  fi
+}
+
+# Funcion para habilitar las opciones necesarias
+function habilitarOpciones() {
+  # Habilitar las opciones si se encuentra desactivadas
+  sed -i 's/#GRUB_DEFAULT=/GRUB_DEFAULT=/g' "${defaultGrub}" &> /dev/null
+  sed -i 's/#GRUB_TIMEOUT=/GRUB_TIMEOUT=/g' "${defaultGrub}" &> /dev/null
+  sed -i 's/#GRUB_CMDLINE_LINUX_DEFAULT=/GRUB_CMDLINE_LINUX_DEFAULT=/g' "${defaultGrub}" &> /dev/null
+  sed -i 's/GRUB_HIDDEN_TIMEOUT=/#Disabled_GRUB_HIDDEN_TIMEOUT/g' "${defaultGrubFiles}"/* &> /dev/null
+  TiempoDesactivado=$(cat ${defaultGrub} | grep "#GRUB_HIDDEN_TIMEOUT=")
+  if [ -z "${TiempoDesactivado}" ] ; then
+    sed -i 's/GRUB_HIDDEN_TIMEOUT=/#GRUB_HIDDEN_TIMEOUT=/g' "${defaultGrub}" &> /dev/null
+  fi
+  # Comprobar si las lineas se encuentran agregadas
+  comprobarGrubDefault=$(cat ${defaultGrub} | grep "GRUB_DEFAULT=")
+  comprobarGrubTimeout=$(cat ${defaultGrub} | grep "GRUB_TIMEOUT=")
+  comprobarGrubCmdLineDefault=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=")
+  if [ -z "${comprobarGrubDefault}" ] ; then
+    echo "GRUB_DEFAULT=\"0\"" > /etc/default/grub.tmp
+    cat ${defaultGrub} >> /etc/default/grub.tmp
+    cp -rfv /etc/default/grub.tmp ${defaultGrub}
+  fi
+  if [ -z "${comprobarGrubTimeout}" ] ; then
+    echo "GRUB_TIMEOUT=\"10\"" > /etc/default/grub.tmp
+    cat ${defaultGrub} >> /etc/default/grub.tmp
+    cp -rfv /etc/default/grub.tmp ${defaultGrub}
+  fi
+  if [ -z "${comprobarGrubCmdLineDefault}" ] ; then
+    parametrosAnterior=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=")
+    if [ -z "${parametrosAnterior}" ] ; then
+      echo "GRUB_CMDLINE_LINUX_DEFAULT=\"\"" > /etc/default/grub.tmp
+      cat ${defaultGrub} >> /etc/default/grub.tmp
+      cp -rfv /etc/default/grub.tmp ${defaultGrub}
+    else
+      LineaInicial=2
+      cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+      parametrosGrub=$(cat ${tmpZenigrub})
+      LineaInicial=$(expr ${LineaInicial} + 1)
+      parametrosGrubLeido=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+      while [ "${parametrosGrubLeido}" != "" ] ; do
+        parametrosGrub="${parametrosGrub}=${parametrosGrubLeido}"
+        LineaInicial=$(expr ${LineaInicial} + 1)
+        parametrosGrubLeido=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+      done
+      echo "GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrub}\"" > /etc/default/grub.tmp
+      cat ${defaultGrub} >> /etc/default/grub.tmp
+      cp -rfv /etc/default/grub.tmp ${defaultGrub}
+      sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=/#Disabled_GRUB_CMDLINE_LINUX_DEFAULT/g' "${defaultGrubFiles}"/* &> /dev/null
+    fi
+  fi
+  parametrosAnterior=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=")
+  if [ -z "${parametrosAnterior}" ] ; then
+    echo "null" > /dev/null
+  else
+    LineaInicial=2
+    cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+    parametrosGrubAnterior=$(cat ${tmpZenigrub})
+    LineaInicial=$(expr ${LineaInicial} + 1)
+    parametrosGrubLeidoAnterior=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+    while [ "${parametrosGrubLeidoAnterior}" != "" ] ; do
+      parametrosGrubAnterior="${parametrosGrubAnterior}=${parametrosGrubLeidoAnterior}"
+      LineaInicial=$(expr ${LineaInicial} + 1)
+      parametrosGrubLeidoAnterior=$(cat "${defaultGrubFiles}"/* | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+    done
+    LineaInicial=2
+    cat "${defaultGrub}" | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+    parametrosGrub=$(cat ${tmpZenigrub})
+    LineaInicial=$(expr ${LineaInicial} + 1)
+    parametrosGrubLeido=$(cat "${defaultGrub}" | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+    while [ "${parametrosGrubLeido}" != "" ] ; do
+      parametrosGrub="${parametrosGrub}=${parametrosGrubLeido}"
+      LineaInicial=$(expr ${LineaInicial} + 1)
+      parametrosGrubLeido=$(cat "${defaultGrub}" | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+    done
+    sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrub}\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrubAnterior}\"/g" "${defaultGrub}"
+    sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=${parametrosGrub}/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrubAnterior}\"/g" "${defaultGrub}"
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=/#Disabled_GRUB_CMDLINE_LINUX_DEFAULT/g' "${defaultGrubFiles}"/* &> /dev/null
+  fi
+}
+
+# Funcion para eliminar espacios
+# Sintaxis: eliminarEspacios "<texto>"
+function eliminarEspacios() {
+  wordToConvert=${1}
+  zenigrubSedFile="${zenigrubSedFolder}/zenigrub-${RANDOM}.txt"
+  mkdir -p ${zenigrubSedFolder} && chmod 777 -R ${zenigrubSedFolder} 2> /dev/null
+  echo "${wordToConvert}" > ${zenigrubSedFile}
+  # Borrar espacios
+  sed -i 's/ /_/g' "${zenigrubSedFile}" &> /dev/null
+  # Mostrar texto convertido
+  wordToConvert=$(cat ${zenigrubSedFile})
+  echo ${wordToConvert}
+}
+
+# Funcion para restaurar los espacios
+# Sintaxis: restaEspacios "<texto>"
+function restaurarEspacios() {
+  wordToConvert=${1}
+  zenigrubSedFile="${zenigrubSedFolder}/zenigrub-${RANDOM}.txt"
+  mkdir -p ${zenigrubSedFolder} && chmod 777 -R ${zenigrubSedFolder} 2> /dev/null
+  echo "${wordToConvert}" > ${zenigrubSedFile}
+  # Borrar espacios
+  sed -i 's/_/\\ /g' "${zenigrubSedFile}" &> /dev/null
+  sed -i 's/\//\\\//g' "${zenigrubSedFile}" &> /dev/null
+  # Mostrar texto convertido
+  wordToConvert=$(cat ${zenigrubSedFile})
+  echo ${wordToConvert}
+}
+
+# Funcion para mostrar las entradas del GRUB
+function mostrarEntradasGrub() {
+  grep 'menuentry "' /boot/grub/grub.cfg | cut -d '"' -f 2 > ${tmpZenigrub}
+  grep "menuentry '" /boot/grub/grub.cfg | cut -d "'" -f 2 >> ${tmpZenigrub}
+  listaTotal=$(wc -l ${tmpZenigrub} | cut -d " " -f 1)
+  listaInicial=1
+  listaCompleta=""
+  clear
+  echo ""
+  echo "* zenigrub-custom-cli ${VERSION} ($M_DATE)"
+  echo ""
+  echo "* List of entries of GRUB:" 
+  echo ""
+  #echo ${listaCompleta}
+  while [ ${listaInicial} -le ${listaTotal} ] ; do
+    entradaLeida=$(cat ${tmpZenigrub} | head -${listaInicial} | tail -1)
+    entradaLeida=$(eliminarEspacios "${entradaLeida}")
+    #listaCompleta="${listaCompleta} ${entradaLeida}"
+    echo " - ${entradaLeida}"
+    listaInicial=$(expr ${listaInicial} + 1)
+  done
+  echo ""
+  echo -n "+ Press ENTER to continue.. " ; read continue
+}
+
+# Funcion para cambiar la entrada por defecto
+function cambiarEntradaDefecto() {
+  grep 'menuentry "' /boot/grub/grub.cfg | cut -d '"' -f 2 > ${tmpZenigrub}
+  grep "menuentry '" /boot/grub/grub.cfg | cut -d "'" -f 2 >> ${tmpZenigrub}
+  listaTotal=$(wc -l ${tmpZenigrub} | cut -d " " -f 1)
+  listaInicial=1
+  listaCompleta=""
+  clear
+  echo ""
+  echo "* zenigrub-custom-cli ${VERSION} ($M_DATE)"
+  echo ""
+  echo "* Type number of entry in GRUB to set by default:"
+  echo ""
+  while [ ${listaInicial} -le ${listaTotal} ] ; do
+    entradaLeida=$(cat ${tmpZenigrub} | head -${listaInicial} | tail -1)
+    entradaLeida=$(eliminarEspacios "${entradaLeida}")
+    #listaCompleta="${listaCompleta} ${entradaLeida}"
+    echo " ${listaInicial} --> ${entradaLeida}" 
+    listaInicial=$(expr ${listaInicial} + 1)
+  done
+  echo ""
+  echo " r --> Return to menu (cancel)"
+  echo ""
+  echo -n "+ [Default: r] Type option: " ; read option_grub
+  if [ -z "${option_grub}" ] ; then
+    mostrarMenuPrincipal
+  elif [ "${option_grub}" == "r" ] ; then
+    mostrarMenuPrincipal
+  else
+    if [ -z "${option_grub}" ] ; then
+      mostrarMenuPrincipal
+    else
+      expr ${option_grub} + 1 2>/dev/null
+      check_number=$?
+      if [ ${check_number} -eq 0 ] ; then
+        echo ""
+        listaInicial=1
+        listaTotal=${option_grub}
+        while [ ${listaInicial} -le ${listaTotal} ] ; do
+          entradaLeida=$(cat ${tmpZenigrub} | head -${listaInicial} | tail -1)
+          entradaLeida=$(eliminarEspacios "${entradaLeida}")
+          #listaCompleta="${listaCompleta} ${entradaLeida}"
+          listaInicial=$(expr ${listaInicial} + 1)
+        done
+        entradaDefecto=$(cat ${defaultGrub} | grep "GRUB_DEFAULT=" | cut -d "=" -f 2 | cut -d '"' -f 2)
+        entradaAnterior=$(eliminarEspacios "${entradaDefecto}")
+        entradaAnterior=$(restaurarEspacios ${entradaAnterior})
+        nuevaEntrada=$(restaurarEspacios ${entradaLeida})
+        echo "* The current entry is '${entradaAnterior}'"
+        echo "* It has been defined as main entrance to '${nuevaEntrada}'"
+        sed -i "s/GRUB_DEFAULT=\"${entradaAnterior}\"/GRUB_DEFAULT=\"${nuevaEntrada}\"/g" "${defaultGrub}"
+        sed -i "s/GRUB_DEFAULT=${entradaAnterior}/GRUB_DEFAULT=\"${nuevaEntrada}\"/g" "${defaultGrub}"
+        actualizarGrub
+      else
+        mostrarMenuPrincipal
+      fi
+    fi
+  fi
+}
+
+# Funcion para mostrar la configuracion por defecto
+function mostrarConfiguracionActual() {
+  entradaDefecto=$(cat ${defaultGrub} | grep "GRUB_DEFAULT=" | cut -d "=" -f 2 | cut -d '"' -f 2)
+  tiempoGrub=$(cat ${defaultGrub} | grep "GRUB_TIMEOUT=" | cut -d "=" -f 2 | cut -d '"' -f 2)
+  LineaInicial=2
+  cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+  parametrosGrub=$(cat ${tmpZenigrub})
+  LineaInicial=$(expr ${LineaInicial} + 1)
+  parametrosGrubLeido=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+  while [ "${parametrosGrubLeido}" != "" ] ; do
+    parametrosGrub="${parametrosGrub}=${parametrosGrubLeido}"
+    LineaInicial=$(expr ${LineaInicial} + 1)
+    parametrosGrubLeido=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+  done
+  clear
+  echo "${parametrosGrub}" > ${tmpZenigrub}
+  echo ""
+  echo "* zenigrub-custom-cli ${VERSION} (${M_DATE})"
+  echo ""
+  echo "* GRUB configuration:"
+  echo ""
+  echo " - Default entry: ${entradaDefecto}"
+  echo " - GRUB time: ${tiempoGrub}"
+  echo " - Boot parameters: ${parametrosGrub}"
+  echo ""
+  echo -n "+ Press ENTER to continue.. " ; read continue
+}
+
+# Funcion para cambiar el tiempo del GRUB
+function cambiarTiempoGrub() {
+  tiempoGrub=$(cat ${defaultGrub} | grep "GRUB_TIMEOUT=" | cut -d "=" -f 2 | cut -d '"' -f 2)
+  clear
+  echo ""
+  echo "* zenigrub-custom-cli ${VERSION} (${M_DATE})"
+  echo ""
+  echo -n "* [Current: ${tiempoGrub}] Type the SECONDS that the GRUB will be visible: " ; read time_grub
+  tiempoActual=${time_grub}
+  if [ -z "${time_grub}" ] ; then
+    mostrarMenuPrincipal
+  else
+    if [ -z "${tiempoActual}" ] ; then
+      actualizarGrub
+    else
+      expr ${tiempoActual} + 1 2>/dev/null
+      error_time=$?
+      if [ ${error_time} -eq 0 ] ; then
+        sed -i "s/GRUB_TIMEOUT=\"${tiempoGrub}\"/GRUB_TIMEOUT=\"${tiempoActual}\"/g" "${defaultGrub}"
+        sed -i "s/GRUB_TIMEOUT=${tiempoGrub}/GRUB_TIMEOUT=\"${tiempoActual}\"/g" "${defaultGrub}"
+        actualizarGrub
+      else
+        mostrarMenuPrincipal
+      fi
+    fi
+  fi
+}
+
+# Funcion para editar los parametros de arranque
+function editarParametrosArranque() {
+  # Se cargan los actuales parametros de arranque
+  LineaInicial=2
+  cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 2 > ${tmpZenigrub}
+  parametrosGrub=$(cat ${tmpZenigrub})
+  LineaInicial=$(expr ${LineaInicial} + 1)
+  parametrosGrubLeido=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+  while [ "${parametrosGrubLeido}" != "" ] ; do
+    parametrosGrub="${parametrosGrub}=${parametrosGrubLeido}"
+    LineaInicial=$(expr ${LineaInicial} + 1)
+    parametrosGrubLeido=$(cat ${defaultGrub} | grep "GRUB_CMDLINE_LINUX_DEFAULT=" | cut -d "=" -f ${LineaInicial} | cut -d '"' -f 1)
+  done
+  echo "${parametrosGrub}" > ${tmpZenigrub}
+  parametrosGrubMostrar=$(cat ${tmpZenigrub})
+  sed -i 's/ /\\ /g' "${tmpZenigrub}" &> /dev/null
+  parametrosGrub=$(cat ${tmpZenigrub})
+  # Se leen y procesan los nuevos parametros
+  clear
+  echo ""
+  echo "* zenigrub-custom-cli ${VERSION} (${M_DATE})"
+  echo ""
+  echo "+ Current parameters: ${parametrosGrubMostrar}"
+  echo -n "* Type the BOOT PARAMETERS in GRUB: " ; read parametrosActual
+  cancelar=$?
+  if [ -z "${parametrosActual}" ] ; then
+    mostrarMenuPrincipal
+  else
+    if [ -z "${parametrosActual}" ] ; then
+      mostrarMenuPrincipal
+    else
+      echo ${parametrosActual} > ${tmpZenigrub}
+      sed -i 's/ /\\ /g' "${tmpZenigrub}" &> /dev/null
+      parametrosActual=$(cat ${tmpZenigrub})
+      sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosGrub}\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosActual}\"/g" "${defaultGrub}"
+      sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=${parametrosGrub}/GRUB_CMDLINE_LINUX_DEFAULT=\"${parametrosActual}\"/g" "${defaultGrub}"
+      actualizarGrub
+    fi
+  fi
+}
+
+# Funcion para actualizar el GRUB
+function actualizarGrub() {
+  echo ""
+  echo "* Updating GRUB configuration"
+  update-grub
+  output=$?
+  if [ ${output} -eq 0 ] ; then
+    echo "* GRUB update process is complete!"
+    echo ""
+    echo -n "+ Press ENTER to continue.. " ; read continue
+  else
+    echo "* There was an error in the GRUB update process."
+    echo ""
+    echo -n "+ Press ENTER to continue.. " ; read continue
+  fi
+}
+
+# Funcion para mostrar el "acerca" del programa
+function mostrarAcerca() {
+  clear
+  echo ""
+  echo "* About"
+  echo ""
+  echo " - Software: zenigrub-custom-cli ${VERSION} (${M_DATE})"
+  echo " - Author: q3aql"
+  echo " - Contact: q3aql@protonmail.ch"
+  echo " - License: GPL v2.0"
+  echo ""
+  echo -n "+ Press ENTER to continue.. " ; read continue
+}
+
+# Mostrar menu con todas las opciones
+function mostrarMenuPrincipal() {
+  mostrarMenu=0
+  while [ ${mostrarMenu} -eq 0 ] ; do
+    clear
+    echo ""
+    echo "* zenigrub-custom-cli ${VERSION} (${M_DATE})"
+    echo ""
+    echo " g --> Show GRUB entries"
+    echo " d --> Change default entry"
+    echo " t --> Change GRUB time"
+    echo " e --> Edit boot parameters"
+    echo " c --> Show current settings"
+    echo " u --> Update GRUB (update-grub)"
+    echo " s --> Save GRUB configuration" 
+    echo " r --> Restore GRUB settings"
+    echo " a --> About"
+    echo ""
+    echo " q --> Exit"
+    echo ""
+    echo -n "* Type the option (example: g): " ; read opcion
+    cancelar=$?
+    if [ ${cancelar} -eq 1 ] ; then
+      mostrarMenu=1
+      exit
+    else
+      if [ "${opcion}" == "g" ] ; then
+        mostrarEntradasGrub
+      elif [ "${opcion}" == "d" ] ; then
+        cambiarEntradaDefecto
+      elif [ "${opcion}" == "t" ] ; then
+        cambiarTiempoGrub
+      elif [ "${opcion}" == "e" ] ; then
+        editarParametrosArranque
+      elif [ "${opcion}" == "c" ] ; then
+        mostrarConfiguracionActual
+      elif [ "${opcion}" == "u" ] ; then
+        actualizarGrub
+      elif [ "${opcion}" == "s" ] ; then
+        guardarConfiguracionGrub
+      elif [ "${opcion}" == "r" ] ; then
+        restaurarConfiguracion
+      elif [ "${opcion}" == "a" ] ; then
+        mostrarAcerca
+      elif [ "${opcion}" == "q" ] ; then
+        mostrarMenu=1
+        exit
+      else
+        echo ""
+        echo "+ Choose one of the menu options."
+        echo ""
+        echo "+ Press ENTER to continue.. " ; read continue
+      fi
+    fi
+  done
+}
+
+# Iniciar aplicacion
+comprobarAdministrador
+comprobarFicheros
+habilitarOpciones
+backupFicheros
+mostrarMenuPrincipal
