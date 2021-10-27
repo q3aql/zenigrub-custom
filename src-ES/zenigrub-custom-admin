@@ -2,13 +2,13 @@
 
 ##############################################################
 # Edita ciertas opciones del GRUB graficamente               #
-# U. Modificacion: 02-08-2021                                #
+# U. Modificacion: 27-10-2021                                #
 # Autor: q3aql                                               #
-# Contacto: q3aql@protonmail.ch                              #
+# Contacto: q3aql@duck.com                                   #
 # Licencia: GPL v2.0                                         #
 ##############################################################
-VERSION="1.5"
-M_DATE="020821"
+VERSION="1.6"
+M_DATE="271021"
 
 # Variables
 iconPath="/opt/zenigrub-custom/zenigrub-custom.png"

@@ -4,10 +4,10 @@
 # Edita ciertas opciones del GRUB mediante terminal          #
 # U. Modificacion: 27-10-2021                                #
 # Autor: q3aql                                               #
-# Contacto: q3aql@protonmail.ch                              #
+# Contacto: q3aql@duck.com                                   #
 # Licencia: GPL v2.0                                         #
 ##############################################################
-VERSION="1.5"
+VERSION="1.6"
 M_DATE="271021"
 
 # Variables generales
@@ -465,11 +465,11 @@ function actualizarGrub() {
 function mostrarAcerca() {
   clear
   echo ""
-  echo "* About"
+  echo "* About:"
   echo ""
   echo " - Software: zenigrub-custom-cli ${VERSION} (${M_DATE})"
   echo " - Author: q3aql"
-  echo " - Contact: q3aql@protonmail.ch"
+  echo " - Contact: q3aql@duck.com"
   echo " - License: GPL v2.0"
   echo ""
   echo -n "+ Press ENTER to continue.. " ; read continue
