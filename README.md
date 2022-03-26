@@ -2,11 +2,13 @@ zenigrub-custom - A simple GTK (Zenity) or CLI interface to edit basic settings 
 =========================================================================================
 
 ### Downloads:
-  * [zenigrub-custom-1.6.tar.gz](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6.tar.gz) - Generic package (English + Spanish Languages).
-  * [zenigrub-custom-1.6-en.deb](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-en.deb) - Debian based package (English version).
-  * [zenigrub-custom-1.6-en.rpm](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-en.rpm) - RedHat/Fedora based package (English version).
-  * [zenigrub-custom-1.6-es.deb](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-es.deb) - Debian based package (Spanish version).
-  * [zenigrub-custom-1.6-es.rpm](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-es.rpm) - RedHat/Fedora based package (Spanish version).
+  * [zenigrub-custom-1.6.tar.gz](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6.tar.gz) (Generic Linux)
+  * [zenigrub-custom-1.6-en.deb](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-en.deb) (Debian/Ubuntu)
+  * [zenigrub-custom-1.6-en.rpm](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-en.rpm) (RedHat/Fedora)
+  * [zenigrub-custom-1.6-en.pkg.tar.zst](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-en.pkg.tar.zst) (Arch Linux)
+  * [zenigrub-custom-1.6-es.deb](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-es.deb) (Debian/Ubuntu - Spanish)
+  * [zenigrub-custom-1.6-es.rpm](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-es.rpm) (RedHat/Fedora - Spanish)
+  * [zenigrub-custom-1.6-es.pkg.tar.zst](https://github.com/q3aql/zenigrub-custom/releases/download/v1.6/zenigrub-custom-1.6-es.pkg.tar.zst) (Arch Linux - Spanish)
   
 _Dependencies: bash, coreutils, zenity, xterm, grep, sed_
 
@@ -32,7 +34,7 @@ _Dependencies: bash, coreutils, zenity, xterm, grep, sed_
 
 ### Images (Screenshots - GUI Version)
 
-<img src="https://raw.githubusercontent.com/q3aql/zenigrub-custom/main/img/zenigrub-image.png" width="876" />
+![zenigrub-image](img/zenigrub-image.png)
 
 ### CLI Version:
 
