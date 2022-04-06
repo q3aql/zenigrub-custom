@@ -41,6 +41,11 @@ function comprobarAdministrador() {
   fi
 }
 
+# Funcion para actualizar el grub
+function update-grub() {
+  grub-mkconfig -o /boot/grub/grub.cfg
+}
+
 # Funcion para comprobar si existen los ficheros necesarios del grub
 function comprobarFicheros() {
   if [ -f ${defaultGrub} ] ; then
