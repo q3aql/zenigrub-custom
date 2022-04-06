@@ -29,6 +29,7 @@ function comprobarAdministrador() {
   administrador=$?
   if [ ${administrador} -eq 0 ] ; then
     rm -rf /etc/root
+    mkdir -p ${defaultGrubFiles}
     touch ${zenigrubInit}
   else
     echo ""
